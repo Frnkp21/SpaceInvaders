@@ -25,6 +25,7 @@ public class GameScreen extends ScreenAdapter {
     private BitmapFont font;
     private Texture backgroundTexture;
     private float heartSpawnTimer;
+    private int invaderCount;
 
     @Override
     public void show() {
@@ -49,6 +50,7 @@ public class GameScreen extends ScreenAdapter {
         hearts = new Array<>();
         invaderSpawnTimer = 0;
         heartSpawnTimer = 0;
+        invaderCount = 0;
 
         font = new BitmapFont();
         font.setColor(Color.WHITE);
@@ -120,6 +122,7 @@ public class GameScreen extends ScreenAdapter {
                 if (invader.getBounds().overlaps(projectile.getBounds())) {
                     projectiles.removeIndex(j);
                     invaders.removeIndex(i);
+                    invaderCount++;
                 }
             }
         }
@@ -137,64 +140,46 @@ public class GameScreen extends ScreenAdapter {
             if (projectile.position.y >= projectile.maxHeight) {
                 projectiles.removeIndex(i);
             } else {
-                // Verificar colisión con corazones
                 for (int j = hearts.size - 1; j >= 0; j--) {
                     Heart heart = hearts.get(j);
                     if (heart.getBounds().overlaps(projectile.getBounds())) {
-                        // Remover el proyectil y el corazón
                         projectiles.removeIndex(i);
                         hearts.removeIndex(j);
-                        // Incrementar la vida del jugador
                         player.incrementLives();
-                        break; // Salir del bucle interior
+                        break;
                     }
                 }
             }
-    }
+        }
 
-
-        // Generar
-        // Generar corazones aleatoriamente cada x segundos
         spawnHearts(delta);
 
-        // Actualizar la posición de los corazones
         for (int i = hearts.size - 1; i >= 0; i--) {
             Heart heart = hearts.get(i);
-            heart.getPosition().y -= 200 * delta; // Velocidad de caída de los corazones
+            heart.getPosition().y -= 200 * delta;
             if (heart.getPosition().y < -heartTexture.getHeight()) {
                 hearts.removeIndex(i);
             }
         }
 
-        // Actualizar la posición del jugador y verificar colisiones
         player.update(delta, projectiles);
     }
 
     private void spawnHearts(float delta) {
-        // Definir el intervalo de generación de corazones
-        float heartSpawnInterval = 15.0f; // Generar un corazón cada 7 segundos
-
-        // Incrementar el temporizador de generación de corazones
+        float heartSpawnInterval = 15.0f;
         heartSpawnTimer += delta;
-
-        // Verificar si es tiempo de generar un nuevo corazón
         if (heartSpawnTimer >= heartSpawnInterval) {
-            // Reiniciar el temporizador
             heartSpawnTimer = 0;
-
-            // Generar un nuevo corazón en una posición aleatoria en la parte superior de la pantalla
             float x = MathUtils.random(0, Gdx.graphics.getWidth() - heartTexture.getWidth());
             float y = Gdx.graphics.getHeight();
-            Heart heart = new Heart(heartTexture, x, y, 100, 100); // Tamaño del corazón de 100x100 píxeles
-            hearts.add(heart); // Agregar el corazón a la lista
+            Heart heart = new Heart(heartTexture, x, y, 80, 80);
+            hearts.add(heart);
         }
-
-
-}
+    }
 
     private void drawUI() {
-        font.draw(batch, "Vidas: " + player.getLives(),
-                20, Gdx.graphics.getHeight() - 20);
+        font.draw(batch, "Vidas: " + player.getLives(), 20, Gdx.graphics.getHeight() - 20);
+        font.draw(batch, "Invasores eliminados: " + invaderCount, 20, Gdx.graphics.getHeight() - 40);
     }
 
     @Override

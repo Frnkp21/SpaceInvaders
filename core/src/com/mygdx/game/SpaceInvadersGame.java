@@ -7,4 +7,5 @@ public class SpaceInvadersGame extends Game {
 	public void create () {
 		setScreen(new MainMenuScreen());
 	}
+
 }
