@@ -4,12 +4,34 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 public class GameScene implements Screen {
 
+    private Player player; // Declarar una instancia de Player
+    private SpriteBatch batch; // Declarar una instancia de SpriteBatch
+    private List<Invader> invaders; // Declarar una lista de invasores
+    private Texture invaderImg; // Textura de los invasores
+
+    private int lives = 3; // Declarar el número inicial de vidas
+    private BitmapFont font; // Declarar la variable font
+    private boolean gameOver; // Variable para controlar el estado del juego
+
+    public GameScene(Texture invaderImg) {
+        player = new Player(new Texture("nave.png"), Color.WHITE, new Texture("projectile.png"));
+        batch = new SpriteBatch();
+        invaders = new ArrayList<>();
+        this.invaderImg = invaderImg; // Asigna la textura del invasor
+        spawnInvaders();
+        font = new BitmapFont();
+    }
 
     @Override
     public void show() {
@@ -31,7 +53,7 @@ public class GameScene implements Screen {
         // Iterar sobre los invasores
         for (int i = 0; i < invaders.size(); i++) {
             Invader invader = invaders.get(i);
-            invader.MoveRandomly(Gdx.graphics.getDeltaTime());
+            invader.MoveDown(Gdx.graphics.getDeltaTime());
             invader.Draw(batch);
 
             // Colisión entre proyectil y invader
@@ -44,7 +66,7 @@ public class GameScene implements Screen {
             }
 
             // Verificar si el invasor llega al jugador
-            if (invader.position.y <= player.position.y + playerImg.getHeight()) {
+            if (invader.position.y <= player.position.y + player.sprite.getHeight()) {
                 invaderReachedPlayer = true;
             }
 
@@ -59,7 +81,7 @@ public class GameScene implements Screen {
         if (invaderReachedPlayer) {
             lives--; // Resta una vida
             if (lives <= 0) {
-                // Implementa la lógica para el fin del juego aquí
+                gameOver = true; // El juego termina si las vidas llegan a 0
             }
         }
 
@@ -80,6 +102,11 @@ public class GameScene implements Screen {
         }
 
         font.draw(batch, "Vidas: " + lives, 20, Gdx.graphics.getHeight() - 20);
+
+        // Verificar si el juego ha terminado
+        if (gameOver) {
+            // Aquí puedes agregar código para manejar el final del juego
+        }
 
         batch.end();
     }
@@ -103,40 +130,34 @@ public class GameScene implements Screen {
     public void hide() {
 
     }
+
     private void spawnInvaders() {
         float spacingX = 70;
         float spacingY = 70;
 
         Random random = new Random();
-        float startX = -100; // Cambiado a -100 para que los invasores puedan aparecer en el borde izquierdo
-        float startY = Gdx.graphics.getHeight() + 100; // Cambiado a +100 para que los invasores puedan aparecer en la parte superior
+        float startX = Gdx.graphics.getWidth() / 2 - 2 * spacingX; // Centrado
+        float startY = Gdx.graphics.getHeight() + 100; // En la parte superior de la pantalla
 
-        // Generar invasores en el borde izquierdo
+        // Generar invasores
         for (int i = 0; i < 5; i++) {
-            Vector2 position = new Vector2(startX, startY - i * spacingY); // Ajusta el rango de aparición vertical
-            invaders.add(new Invader(invaderImg, Color.WHITE, position));
-        }
-
-        // Generar invasores en el borde superior
-        for (int i = 0; i < 5; i++) {
-            Vector2 position = new Vector2(startX + i * spacingX, startY); // Ajusta el rango de aparición horizontal
-            invaders.add(new Invader(invaderImg, Color.WHITE, position));
-        }
-
-        // Generar invasores en el borde derecho
-        for (int i = 0; i < 5; i++) {
-            Vector2 position = new Vector2(Gdx.graphics.getWidth() + 100, startY - i * spacingY); // Ajusta el rango de aparición vertical
-            invaders.add(new Invader(invaderImg, Color.WHITE, position));
-        }
-
-        // Generar invasores en el borde inferior
-        for (int i = 0; i < 5; i++) {
-            Vector2 position = new Vector2(startX + i * spacingX, -100); // Ajusta el rango de aparición horizontal
-            invaders.add(new Invader(invaderImg, Color.WHITE, position));
+            for (int j = 0; j < 5; j++) {
+                // Ajustar la posición de cada invasor de manera aleatoria
+                float randomX = startX + (random.nextInt(5) - 2) * spacingX;
+                float randomY = startY - (random.nextInt(5) + i) * spacingY;
+                Vector2 position = new Vector2(randomX, randomY);
+                invaders.add(new Invader(invaderImg, Color.WHITE, position));
+            }
         }
     }
+
+
     @Override
     public void dispose() {
-
+        batch.dispose();
+        // Dispose textures for invaders
+        for (Invader invader : invaders) {
+            invader.sprite.getTexture().dispose();
+        }
     }
 }

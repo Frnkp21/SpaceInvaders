@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 
 public class Player {
@@ -56,14 +57,18 @@ public class Player {
 
     public void continuousShoot() {
         // Verificar si el proyectil ya existe antes de crear uno nuevo
-        if (projectile == null || projectile.position.y >= Gdx.graphics.getHeight()) {
-            projectile = new Projectile(projectileImg, Color.WHITE, new Vector2(position.x, position.y + sprite.getHeight() * sprite.getScaleY()), Gdx.graphics.getHeight(), projectileSize);
+        if (projectile == null || projectile.position.y >= position.y + Gdx.graphics.getHeight()) {
+            projectile = new Projectile(projectileImg, Color.WHITE, new Vector2(position.x, position.y + sprite.getHeight() * sprite.getScaleY()), position.y + Gdx.graphics.getHeight(), projectileSize);
         }
     }
 
     public void Shoot() {
         if (sprite != null) {
-            projectile = new Projectile(projectileImg, Color.WHITE, new Vector2(position.x, position.y + sprite.getHeight() * sprite.getScaleY()), Gdx.graphics.getHeight(), projectileSize);
+            projectile = new Projectile(projectileImg, Color.WHITE, new Vector2(position.x, position.y + sprite.getHeight() * sprite.getScaleY()), position.y + Gdx.graphics.getHeight(), projectileSize);
         }
     }
+    public Rectangle getBounds() {
+        return sprite.getBoundingRectangle();
+    }
+
 }

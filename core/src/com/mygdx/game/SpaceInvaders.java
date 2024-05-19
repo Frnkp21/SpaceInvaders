@@ -4,6 +4,7 @@ package com.mygdx.game;
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
@@ -21,11 +22,12 @@ public class SpaceInvaders extends Game {
 	Texture invaderImg;
 	List<Invader> invaders;
 	int lives = 3;
-
 	BitmapFont font;
 
+	float invaderSpeed = 50f; // Velocidad de los invasores
+	float invaderMoveTimer = 0f; // Temporizador para controlar el movimiento de los invasores
 
-
+	boolean gameOver = false; // Variable para controlar el estado del juego
 
 	@Override
 	public void create() {
@@ -34,11 +36,10 @@ public class SpaceInvaders extends Game {
 		player = new Player(playerImg, Color.WHITE, new Texture("projectile.png")); // Agrega la textura del proyectil aquí
 
 		invaderImg = new Texture("invader.png");
-		invaders = new ArrayList<Invader>();
+		invaders = new ArrayList<>();
 		spawnInvaders();
 
 		font = new BitmapFont();
-
 	}
 
 	private void spawnInvaders() {
@@ -46,31 +47,15 @@ public class SpaceInvaders extends Game {
 		float spacingY = 70;
 
 		Random random = new Random();
-		float startX = -100; // Cambiado a -100 para que los invasores puedan aparecer en el borde izquierdo
-		float startY = Gdx.graphics.getHeight() + 100; // Cambiado a +100 para que los invasores puedan aparecer en la parte superior
+		float startX = Gdx.graphics.getWidth() / 2 - 2 * spacingX; // Centrado
+		float startY = Gdx.graphics.getHeight() + 100; // En la parte superior de la pantalla
 
-		// Generar invasores en el borde izquierdo
+		// Generar invasores
 		for (int i = 0; i < 5; i++) {
-			Vector2 position = new Vector2(startX, startY - i * spacingY); // Ajusta el rango de aparición vertical
-			invaders.add(new Invader(invaderImg, Color.WHITE, position));
-		}
-
-		// Generar invasores en el borde superior
-		for (int i = 0; i < 5; i++) {
-			Vector2 position = new Vector2(startX + i * spacingX, startY); // Ajusta el rango de aparición horizontal
-			invaders.add(new Invader(invaderImg, Color.WHITE, position));
-		}
-
-		// Generar invasores en el borde derecho
-		for (int i = 0; i < 5; i++) {
-			Vector2 position = new Vector2(Gdx.graphics.getWidth() + 100, startY - i * spacingY); // Ajusta el rango de aparición vertical
-			invaders.add(new Invader(invaderImg, Color.WHITE, position));
-		}
-
-		// Generar invasores en el borde inferior
-		for (int i = 0; i < 5; i++) {
-			Vector2 position = new Vector2(startX + i * spacingX, -100); // Ajusta el rango de aparición horizontal
-			invaders.add(new Invader(invaderImg, Color.WHITE, position));
+			for (int j = 0; j < 5; j++) {
+				Vector2 position = new Vector2(startX + j * spacingX, startY - i * spacingY);
+				invaders.add(new Invader(invaderImg, Color.WHITE, position));
+			}
 		}
 	}
 
@@ -80,67 +65,71 @@ public class SpaceInvaders extends Game {
 		Gdx.gl.glClearColor(0, 0, 0, 1);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
+		if (!gameOver) {
+			handleInput();
+			update();
+			draw();
+		} else {
+			goToMainMenu(); // Transición al menú principal cuando el jugador pierde
+		}
+	}
+
+	private void handleInput() {
+		// Disparo del jugador
+		if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+			player.Shoot();
+		}
+	}
+
+	private void update() {
 		player.Update(Gdx.graphics.getDeltaTime());
 
+		// Movimiento de los invasores
+		invaderMoveTimer += Gdx.graphics.getDeltaTime();
+		if (invaderMoveTimer >= 1f) {
+			moveInvaders();
+			invaderMoveTimer = 0f;
+		}
+
+		// Colisión entre invasores y jugador
+		checkCollisions();
+
+		// Verificar si todos los invasores han alcanzado la parte inferior de la pantalla
+		for (Invader invader : invaders) {
+			if (invader.position.y <= 0) {
+				gameOver = true;
+				break;
+			}
+		}
+	}
+
+	private void draw() {
 		batch.begin();
 		player.Draw(batch);
-
-		boolean invaderReachedPlayer = false; // Variable para detectar si un invasor alcanzó al jugador
-
-		// Iterar sobre los invasores
-		for (int i = 0; i < invaders.size(); i++) {
-			Invader invader = invaders.get(i);
-			invader.MoveRandomly(Gdx.graphics.getDeltaTime());
+		for (Invader invader : invaders) {
 			invader.Draw(batch);
-
-			// Colisión entre proyectil y invader
-			if (player.projectile != null) {
-				if (player.projectile.position.dst(invader.position) < 40) {
-					invaders.remove(invader);
-					player.projectile = null;
-					i--; // Ajustar el índice después de la eliminación
-				}
-			}
-
-			// Verificar si el invasor llega al jugador
-			if (invader.position.y <= player.position.y + playerImg.getHeight()) {
-				invaderReachedPlayer = true;
-			}
-
-			// Eliminar invasores que pasan por debajo de la pantalla
-			if (invader.position.y <= 0) {
-				invaders.remove(invader); // Elimina el invasor de la lista
-				i--; // Ajusta el índice después de la eliminación
-			}
 		}
-
-		// Restar una vida si un invasor alcanza al jugador
-		if (invaderReachedPlayer) {
-			lives--; // Resta una vida
-			if (lives <= 0) {
-				// Implementa la lógica para el fin del juego aquí
-			}
-		}
-
-		// Actualizar y dibujar proyectil del jugador (si está en vuelo)
-		if (player.projectile != null) {
-			player.projectile.Update(Gdx.graphics.getDeltaTime());
-			player.projectile.Draw(batch);
-
-			// Destruir proyectil si llega al techo
-			if (player.projectile.position.y >= Gdx.graphics.getHeight()) {
-				player.projectile = null;
-			}
-		}
-
-		// Verificar si todos los invasores han sido eliminados
-		if (invaders.isEmpty()) {
-			spawnInvaders(); // Generar nuevos invasores
-		}
-
 		font.draw(batch, "Vidas: " + lives, 20, Gdx.graphics.getHeight() - 20);
-
 		batch.end();
+	}
+
+	private void moveInvaders() {
+		for (Invader invader : invaders) {
+			invader.MoveDown(invaderSpeed * Gdx.graphics.getDeltaTime());
+		}
+	}
+
+	private void checkCollisions() {
+		for (Invader invader : invaders) {
+			if (invader.getBounds().overlaps(player.getBounds())) {
+				gameOver = true;
+				break;
+			}
+		}
+	}
+
+	private void goToMainMenu() {
+		// Aquí implementarías la lógica para cambiar a la pantalla del menú principal
 	}
 
 	@Override
@@ -148,5 +137,6 @@ public class SpaceInvaders extends Game {
 		batch.dispose();
 		playerImg.dispose();
 		invaderImg.dispose();
+		font.dispose();
 	}
 }

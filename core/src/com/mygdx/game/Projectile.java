@@ -15,7 +15,6 @@ public class Projectile {
 
     public Projectile(Texture img, Color color, Vector2 position, float maxHeight, float size) {
         sprite = new Sprite(img);
-        sprite.setScale(1); // Ajusta la escala según lo necesites
         sprite.setColor(color);
         this.position = position;
         this.maxHeight = maxHeight;
