@@ -1,38 +1,40 @@
 package com.mygdx.game;
 
-import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 
 public class Projectile {
     public Vector2 position;
     public Sprite sprite;
     public float speed = 600;
-    public float maxHeight; // Nueva variable para almacenar la altura máxima
-    public float size; // Nuevo atributo para el tamaño del proyectil
+    public float maxHeight;
+    public float size;
 
-    public Projectile(Texture img, Color color, Vector2 position, float maxHeight, float size) {
+    public Projectile(Texture img, float positionX, float positionY, float maxHeight, float size) {
         sprite = new Sprite(img);
-        sprite.setColor(color);
-        this.position = position;
+        this.position = new Vector2(positionX, positionY);
         this.maxHeight = maxHeight;
-        this.size = size; // Establecer el tamaño del proyectil
+        this.size = size;
     }
 
     public void Update(float deltaTime) {
         position.y += deltaTime * speed;
-        // Verificar si el proyectil ha alcanzado la altura máxima
         if (position.y >= maxHeight) {
-            position.y = maxHeight; // Ajustar la posición al límite máximo
+            position.y = maxHeight;
         }
     }
 
     public void Draw(SpriteBatch batch) {
-        // Ajustar el tamaño del proyectil
         sprite.setSize(size, size);
         sprite.setPosition(position.x, position.y);
         sprite.draw(batch);
     }
+    public Rectangle getBounds() {
+        return new Rectangle(position.x, position.y, sprite.getWidth(), sprite.getHeight());
+    }
+
+
 }
